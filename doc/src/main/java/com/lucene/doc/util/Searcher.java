@@ -1,71 +1,114 @@
 package com.lucene.doc.util;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.BytesRef;
-
-import com.alibaba.fastjson.JSON;
+import org.wltea.analyzer.lucene.IKAnalyzer;
 
 public class Searcher {
 
 	public static Map<String, Object> search(String indexDir, String q) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Map<String, Long>> map2 = new HashMap<String, Map<String, Long>>();
 		Directory dir = FSDirectory.open(Paths.get(indexDir));
 		IndexReader reader = DirectoryReader.open(dir);
 		IndexSearcher is = new IndexSearcher(reader);
-		//IKAnalyzer analyzer = new IKAnalyzer();
-		//QueryParser parser = new QueryParser("neirong", analyzer);
-		//Query query = parser.parse("\""+q+"\"");
-		Query query = new TermQuery(new Term("neirong", q));
+		IKAnalyzer analyzer = new IKAnalyzer();
+		QueryParser parser = new QueryParser("neirong", analyzer);
+		Query query = parser.parse("\""+q+"\"");
+		/*Query query = new TermQuery(new Term("neirong", q));*/
 		long start = System.currentTimeMillis();
 		Sort sort = new Sort(new SortField[] { new SortField("id", SortField.Type.INT, false) });
 		TopDocs hits = is.search(query, Integer.MAX_VALUE, sort);
 		long end = System.currentTimeMillis();
 		int totalHits = hits.totalHits;
 		String qyfirsttime = "";
+		String nianfen = "";
 		if(totalHits>0){
 			map.put("totalnum", totalHits);
 			map.put("firsttime", is.doc(hits.scoreDocs[0].doc).get("riqi"));
 			map.put("biaoti",is.doc(hits.scoreDocs[0].doc).get("biaoti"));
+			map.put("banmiantu",is.doc(hits.scoreDocs[0].doc).get("banmiantu"));
 			map.put("qihao",is.doc(hits.scoreDocs[0].doc).get("qihao"));
 			map.put("times",(end - start)+"毫秒");
 			Document doc = new Document();
 			for(ScoreDoc scoreDoc:hits.scoreDocs){
 				doc = new Document();
 				doc=is.doc(scoreDoc.doc);
-				//if(doc.get("banming") != null && !"".equals(doc.get("banming"))){
-					if("头版".equals(doc.get("banming"))){
-						qyfirsttime = doc.get("riqi");
-							break;
-					}else if("004".equals(doc.get("banci")) ||  "005".equals(doc.get("banci")) ||  "006".equals(doc.get("banci")) ){
-						qyfirsttime = doc.get("riqi");
+				if("头版".equals(doc.get("banming"))){
+					qyfirsttime = doc.get("riqi");
 						break;
-					}
-				//}
-				
+				}else if("004".equals(doc.get("banci")) ||  "005".equals(doc.get("banci")) ||  "006".equals(doc.get("banci")) ){
+					qyfirsttime = doc.get("riqi");
+					break;
+				}
 			}	
+			//对所有结果进行分组处理
+			for(ScoreDoc scoreDoc:hits.scoreDocs){
+					doc = new Document();
+					doc=is.doc(scoreDoc.doc);
+				    nianfen = doc.get("nianfen");
+				    long cp = 0;
+				    TokenStream tokenStream = null;
+				    try {
+				    	    tokenStream = analyzer.tokenStream("neirong", new StringReader(doc.get("neirong")));
+							CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
+							tokenStream.reset();
+							
+				            while (tokenStream.incrementToken()) {
+				            	if(charTermAttribute.toString().indexOf(q) != -1){
+				            		cp++;
+				            	}
+				            }
+					} catch (Exception e) {
+						// TODO: handle exception
+					}finally {
+						tokenStream.close();
+					}
+				    if(map2.containsKey(nianfen)){
+				    //key 存在
+				    	Map<String, Long> map3 = map2.get(nianfen);
+				    	long gaozigroupsum = map3.get("gaozigroupsum");//多少篇稿子
+				    	long zishugroupsum = map3.get("zishugroupsum");//多少字数
+				    	long cishugroupsum = map3.get("cishugroupsum");//多少次数
+				    	map3.put("gaozigroupsum", gaozigroupsum+1);
+				    	map3.put("zishugroupsum", zishugroupsum+Long.valueOf(doc.get("zishu")));
+				    	map3.put("cishugroupsum", cishugroupsum+cp);
+				    	map2.put(nianfen, map3);
+			    	}else{
+			    	//不存在
+			    		Map<String, Long> map3 = new HashMap<String, Long>();
+			    		map3.put("gaozigroupsum", 1l);
+				    	map3.put("zishugroupsum", Long.valueOf(doc.get("zishu")));
+				    	map3.put("cishugroupsum", cp);
+				    	map2.put(nianfen, map3);
+			    	}
+			}
 			map.put("qyfirsttime",qyfirsttime);
+			map.put("countdata", map2);
 		}else{
 			map.put("totalnum", 0);
 			map.put("firsttime", 0);
@@ -74,6 +117,7 @@ public class Searcher {
 			map.put("qihao","");
 			map.put("times",(end - start)+"毫秒");
 			map.put("qyfirsttime",qyfirsttime);
+			map.put("countdata", map2);
 		}
 		reader.close();
 		return map;
@@ -84,10 +128,10 @@ public class Searcher {
 		Directory dir = FSDirectory.open(Paths.get(indexDir));
 		IndexReader reader = DirectoryReader.open(dir);
 		IndexSearcher is = new IndexSearcher(reader);
-		/*Analyzer analyzer = new IKAnalyzer(true);
+		IKAnalyzer analyzer = new IKAnalyzer(true);
 		QueryParser parser = new QueryParser("zuozhe", analyzer);
-		Query query = parser.parse("\""+q+"\"");*/
-		Query query = new TermQuery(new Term("zuozhe",q));
+		Query query = parser.parse("\""+q+"\"");
+		//Query query = new TermQuery(new Term("zuozhe",q));
 		long start = System.currentTimeMillis();
 		Sort sort = new Sort(new SortField[] { new SortField("id", SortField.Type.INT, false) });
 		TopDocs hits = is.search(query, Integer.MAX_VALUE, sort);
@@ -100,6 +144,7 @@ public class Searcher {
 			map.put("totalnum", totalHits);
 			map.put("firsttime", is.doc(hits.scoreDocs[0].doc).get("riqi"));
 			map.put("biaoti",is.doc(hits.scoreDocs[0].doc).get("biaoti"));
+			map.put("banmiantu",is.doc(hits.scoreDocs[0].doc).get("banmiantu"));
 			map.put("qihao",is.doc(hits.scoreDocs[0].doc).get("qihao"));
 			map.put("times",(end - start)+"毫秒");
 			Document doc = new Document();
@@ -215,10 +260,6 @@ public class Searcher {
 			e.printStackTrace();
 		}
 		return map;
-	}
-	public static void main(String[] args) {
-		String indexDir = "D:\\lucene";
-		System.out.println(JSON.toJSONString(getTotalFreqMapsss(indexDir, "neirong")));
-	}
+	}	
 	
 }

@@ -29,4 +29,22 @@ public class DateUtils {
         return date;
     }
     
+    /**
+     * 格式化日期
+     * @param date
+     * @param format
+     * @return
+     */
+    public static String getDateToString(Date date,String format){
+    	try {
+    		SimpleDateFormat sf = new SimpleDateFormat(format);
+            String str=sf.format(date);
+            return str;
+		} catch (Exception e) {
+			// TODO: handle exception
+			return "";
+		}
+        
+    }
+    
 }

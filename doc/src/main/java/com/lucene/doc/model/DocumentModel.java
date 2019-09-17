@@ -10,6 +10,14 @@ public class DocumentModel {
 	private String qihao;
 	private String banshu;
 	private String biaoti;
+	private String banmiantu;
+	
+	public String getBanmiantu() {
+		return banmiantu;
+	}
+	public void setBanmiantu(String banmiantu) {
+		this.banmiantu = banmiantu;
+	}
 	private long zishu;
 	public String getBanci() {
 		return banci;

@@ -3,8 +3,6 @@ package com.lucene.doc.util;
 
 import java.nio.file.Paths;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -41,7 +39,9 @@ public class Indexer {
 		try {
 			Document doc=new Document();
 			doc.add(new NumericDocValuesField("id", DateUtils.getDateTimeInt(DateUtils.getDateToString(documentModel.getRiqi(), "yyyy-MM-dd"))));
+			doc.add(new TextField("nianfen", DateUtils.getDateToString(DateUtils.getDateToString(documentModel.getRiqi(), "yyyy"),"yyyy"), Field.Store.YES));
 			doc.add(new TextField("riqi", StringUtil.format(documentModel.getRiqi()) , Field.Store.YES));
+			doc.add(new TextField("banmiantu", StringUtil.format(documentModel.getBanmiantu()) , Field.Store.YES));
 			doc.add(new TextField("neirong",StringUtil.format(documentModel.getNeirong()),Field.Store.YES));
 			doc.add(new TextField("zishu",StringUtil.format(documentModel.getZishu()),Field.Store.YES));
 			doc.add(new TextField("banci",StringUtil.format(documentModel.getBanci()),Field.Store.YES));

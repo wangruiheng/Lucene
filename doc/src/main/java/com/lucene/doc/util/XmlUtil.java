@@ -29,6 +29,7 @@ public class XmlUtil {
 	           	String baoming="";
 	           	String qihao="";
 	           	String banshu="";
+	           	String banmiantu = "";
 	            while (iter.hasNext()) {
 	            	documentModel=new DocumentModel();
 	                Element recordEle = (Element) iter.next();
@@ -56,6 +57,13 @@ public class XmlUtil {
 			                if("版数".equals(qName)){
 			                	banshu = text;
 			                }
+			                if("版面图".equals(qName)){
+			                	List<Element> elements3 = element.elements();
+			                	if(elements3.size()>0){
+			                		banmiantu = elements3.get(0).getText();
+			                	}
+			                }
+			                
 		                }
 		                documentModel.setNeirong("");
 			            documentModel.setZuozhe("");
@@ -101,6 +109,7 @@ public class XmlUtil {
 		            documentModel.setQihao(qihao);
 		            documentModel.setBanshu(banshu);
 		            documentModel.setRiqi(riqi);
+		            documentModel.setBanmiantu(banmiantu);
 	                list.add(documentModel);
 	            }
 	            
