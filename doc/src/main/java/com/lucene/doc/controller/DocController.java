@@ -22,6 +22,8 @@ public class DocController {
 	
 	public  final static String indexDir = "C:\\lucene";
 	public  final static String path = "C:\\doc\\app-01_bak";
+	/*public  final static String indexDir = "d:\\lucene";
+	public  final static String path = "d:\\xml";*/
 	
 	@RequestMapping("/productionindex")
 	public void productionindex(HttpServletRequest request,HttpServletResponse response) {
@@ -49,8 +51,14 @@ public class DocController {
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				System.out.println("报错！！！！！！！！！！！！！！！！！！！！！！！！！！！！！");
+				System.out.println("报错！！！！！！！！！！！！！！！！！！！！！！！！！！！！！");
+				System.out.println("报错！！！！！！！！！！！！！！！！！！！！！！！！！！！！！");
 			}
 		}
+		System.out.println("完毕！！！！！！！！！！！！！！！！！！！！！！！！！！！！！");
+		System.out.println("完毕！！！！！！！！！！！！！！！！！！！！！！！！！！！！！");
+		System.out.println("完毕！！！！！！！！！！！！！！！！！！！！！！！！！！！！！");
 	}
 	@RequestMapping("/searchdocindex")
 	public Object searchdocindex(HttpServletRequest request,HttpServletResponse response,@RequestParam String q) throws Exception {
