@@ -32,6 +32,56 @@ public class Searcher {
 
 	public static Map<String, Object> search(String indexDir, String q) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
+		Directory dir = FSDirectory.open(Paths.get(indexDir));
+		IndexReader reader = DirectoryReader.open(dir);
+		IndexSearcher is = new IndexSearcher(reader);
+		IKAnalyzer analyzer = new IKAnalyzer();
+		QueryParser parser = new QueryParser("neirong", analyzer);
+		Query query = parser.parse("\""+q+"\"");
+		long start = System.currentTimeMillis();
+		Sort sort = new Sort(new SortField[] { new SortField("id", SortField.Type.INT, false) });
+		TopDocs hits = is.search(query, Integer.MAX_VALUE, sort);
+		long end = System.currentTimeMillis();
+		int totalHits = hits.totalHits;
+		String qyfirsttime = "";
+		if(totalHits>0){
+			map.put("totalnum", totalHits);
+			map.put("firsttime", is.doc(hits.scoreDocs[0].doc).get("riqi"));
+			map.put("biaoti",is.doc(hits.scoreDocs[0].doc).get("biaoti"));
+			map.put("banmiantu",is.doc(hits.scoreDocs[0].doc).get("banmiantu"));
+			map.put("qihao",is.doc(hits.scoreDocs[0].doc).get("qihao"));
+			map.put("times",(end - start)+"毫秒");
+			Document doc = new Document();
+			for(ScoreDoc scoreDoc:hits.scoreDocs){
+				doc = new Document();
+				doc=is.doc(scoreDoc.doc);
+				if("头版".equals(doc.get("banming"))){
+					qyfirsttime = doc.get("riqi");
+						break;
+				}else if("004".equals(doc.get("banci")) ||  "005".equals(doc.get("banci")) ||  "006".equals(doc.get("banci")) ){
+					qyfirsttime = doc.get("riqi");
+					break;
+				}
+			}	
+			map.put("qyfirsttime",qyfirsttime);
+		}else{
+			map.put("totalnum", 0);
+			map.put("firsttime", 0);
+			map.put("neirong","");
+			map.put("biaoti","");
+			map.put("qihao","");
+			map.put("times",(end - start)+"毫秒");
+			map.put("qyfirsttime",qyfirsttime);
+			map.put("banmiantu","");
+		}
+		reader.close();
+		return map;
+	}
+	
+	
+	
+	public static Map<String, Object> search3(String indexDir, String q) throws Exception {
+		Map<String, Object> map = new HashMap<String, Object>();
 		Map<String, Map<String, Long>> map2 = new HashMap<String, Map<String, Long>>();
 		Directory dir = FSDirectory.open(Paths.get(indexDir));
 		IndexReader reader = DirectoryReader.open(dir);
@@ -39,7 +89,6 @@ public class Searcher {
 		IKAnalyzer analyzer = new IKAnalyzer();
 		QueryParser parser = new QueryParser("neirong", analyzer);
 		Query query = parser.parse("\""+q+"\"");
-		/*Query query = new TermQuery(new Term("neirong", q));*/
 		long start = System.currentTimeMillis();
 		Sort sort = new Sort(new SortField[] { new SortField("id", SortField.Type.INT, false) });
 		TopDocs hits = is.search(query, Integer.MAX_VALUE, sort);
@@ -131,7 +180,6 @@ public class Searcher {
 		IKAnalyzer analyzer = new IKAnalyzer(true);
 		QueryParser parser = new QueryParser("zuozhe", analyzer);
 		Query query = parser.parse("\""+q+"\"");
-		//Query query = new TermQuery(new Term("zuozhe",q));
 		long start = System.currentTimeMillis();
 		Sort sort = new Sort(new SortField[] { new SortField("id", SortField.Type.INT, false) });
 		TopDocs hits = is.search(query, Integer.MAX_VALUE, sort);

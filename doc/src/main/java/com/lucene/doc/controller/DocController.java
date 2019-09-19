@@ -74,6 +74,13 @@ public class DocController {
 		return Searcher.search2(indexDir, q);
 	}
 	
+	@RequestMapping("/searchdocindex3")
+	public Object searchdocindex3(HttpServletRequest request,HttpServletResponse response,@RequestParam String q) throws Exception {
+		response.addHeader("Access-Control-Allow-Origin", "*");
+		response.addHeader("Access-Control-Allow-Method", "POST,GET");
+		return Searcher.search3(indexDir, q);
+	}
+	
 /*	@RequestMapping("/indexcount")
 	public Object indexcount(HttpServletRequest request,HttpServletResponse response,@RequestParam String field,@RequestParam String q) throws Exception {
 		response.addHeader("Access-Control-Allow-Origin", "*");
