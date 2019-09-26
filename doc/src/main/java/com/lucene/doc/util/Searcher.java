@@ -80,6 +80,49 @@ public class Searcher {
 	
 	
 	
+	
+	public static Map<String, Object> search4(String indexDir, String q) throws Exception {
+		Map<String, Object> map = new HashMap<String, Object>();
+		Directory dir = FSDirectory.open(Paths.get(indexDir));
+		IndexReader reader = DirectoryReader.open(dir);
+		IndexSearcher is = new IndexSearcher(reader);
+		IKAnalyzer analyzer = new IKAnalyzer(true);
+		QueryParser parser = new QueryParser("nianfen", analyzer);
+		Query query = parser.parse("\""+q+"\"");
+		long start = System.currentTimeMillis();
+		Sort sort = new Sort(new SortField[] { new SortField("id", SortField.Type.INT, false) });
+		TopDocs hits = is.search(query, Integer.MAX_VALUE, sort);
+		long end = System.currentTimeMillis();
+		int totalHits = hits.totalHits;
+		long n = 0;
+		if(totalHits>0){
+			map.put("totalnum", totalHits);
+			Document doc = new Document();
+			for(ScoreDoc scoreDoc:hits.scoreDocs){
+				doc = new Document();
+				doc=is.doc(scoreDoc.doc);
+				if(doc.get("zishu") != null && !"".equals(doc.get("zishu"))){
+					n = n + Long.valueOf(doc.get("zishu"));
+				}
+			}
+			//刊登文章篇数总和
+			map.put("doctotalnum", totalHits);
+			//发表文字总和
+			map.put("docwordtotalnum", n);
+			map.put("times",(end - start)+"毫秒");
+		}else{
+			map.put("totalnum", totalHits);
+			//刊登文章篇数总和
+			map.put("doctotalnum", totalHits);
+			//发表文字总和
+			map.put("docwordtotalnum", n);
+			
+			map.put("times",(end - start)+"毫秒");
+		}
+		reader.close();
+		return map;
+	}
+	
 	public static Map<String, Object> search3(String indexDir, String q) throws Exception {
 		Map<String, Object> map = new HashMap<String, Object>();
 		Map<String, Map<String, Long>> map2 = new HashMap<String, Map<String, Long>>();

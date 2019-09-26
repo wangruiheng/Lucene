@@ -1,7 +1,9 @@
 package com.lucene.doc.controller;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -79,6 +81,21 @@ public class DocController {
 		response.addHeader("Access-Control-Allow-Origin", "*");
 		response.addHeader("Access-Control-Allow-Method", "POST,GET");
 		return Searcher.search3(indexDir, q);
+	}
+	
+	
+	@RequestMapping("/searchdocindex4")
+	public Object searchdocindex4(HttpServletRequest request,HttpServletResponse response) throws Exception {
+		response.addHeader("Access-Control-Allow-Origin", "*");
+		response.addHeader("Access-Control-Allow-Method", "POST,GET");
+		Map<String, Object> map = new HashMap<String, Object>();
+		Map<String, Object> map2 = new HashMap<String, Object>();
+		for(int i=1984;i<=2019;i++ ){
+			map = new HashMap<String, Object>();
+			map = Searcher.search4(indexDir, i+"");
+			map2.put(i+"", map);
+		}
+		return map2;
 	}
 	
 /*	@RequestMapping("/indexcount")
