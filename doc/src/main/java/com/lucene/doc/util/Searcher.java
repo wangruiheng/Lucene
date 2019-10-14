@@ -3,7 +3,9 @@ package com.lucene.doc.util;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -82,6 +84,7 @@ public class Searcher {
 	
 	
 	public static Map<String, Object> search4(String indexDir, String q) throws Exception {
+		ArrayList<String> arrayList = new ArrayList<String>();
 		Map<String, Object> map = new HashMap<String, Object>();
 		Directory dir = FSDirectory.open(Paths.get(indexDir));
 		IndexReader reader = DirectoryReader.open(dir);
@@ -104,12 +107,15 @@ public class Searcher {
 				if(doc.get("zishu") != null && !"".equals(doc.get("zishu"))){
 					n = n + Long.valueOf(doc.get("zishu"));
 				}
+				arrayList.add(doc.get("qihao"));
 			}
 			//刊登文章篇数总和
 			map.put("doctotalnum", totalHits);
 			//发表文字总和
 			map.put("docwordtotalnum", n);
 			map.put("times",(end - start)+"毫秒");
+			arrayList = new ArrayList<>(new HashSet<String>(arrayList));
+			map.put("banmiantotalnum",arrayList.size());
 		}else{
 			map.put("totalnum", totalHits);
 			//刊登文章篇数总和
@@ -118,6 +124,8 @@ public class Searcher {
 			map.put("docwordtotalnum", n);
 			
 			map.put("times",(end - start)+"毫秒");
+			
+			map.put("banmiantotalnum",arrayList.size());
 		}
 		reader.close();
 		return map;
@@ -163,7 +171,7 @@ public class Searcher {
 					doc = new Document();
 					doc=is.doc(scoreDoc.doc);
 				    nianfen = doc.get("nianfen");
-				    long cp = 0;
+				    long cp = 1;
 				    TokenStream tokenStream = null;
 				    try {
 				    	    tokenStream = analyzer.tokenStream("neirong", new StringReader(doc.get("neirong")));
